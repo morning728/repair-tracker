@@ -1,8 +1,10 @@
 .git
 .venv
+.ansible-venv
 __pycache__
 *.pyc
 data
 tmp
 *.log
 .env
+ansible

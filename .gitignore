@@ -1,7 +1,9 @@
 .venv/
+.ansible-venv/
 __pycache__/
 *.py[cod]
 data/
 tmp/
 .env
 *.log
+/ansible/inventory.ini
