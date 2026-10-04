@@ -1,0 +1,6 @@
+[repair_servers]
+# Replace the example IP, username and private key path with your server details.
+repair-server ansible_host=192.0.2.10 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/repair_server
+
+[repair_servers:vars]
+ansible_python_interpreter=/usr/bin/python3

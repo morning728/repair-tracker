@@ -1,0 +1,7 @@
+repair_app_dir: /opt/repair-tracker
+repair_app_port: 8080
+repair_bind_address: 127.0.0.1
+repair_project_name: repair-tracker
+repair_docker_architectures:
+  x86_64: amd64
+  aarch64: arm64
