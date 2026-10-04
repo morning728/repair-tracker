@@ -1,8 +1,9 @@
 from math import ceil
+from datetime import datetime
 
-from flask import Blueprint, abort, current_app, render_template, request
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 
-from store import DEVICE_TYPES, STATUSES, connect, get_request
+from store import DEVICE_TYPES, STATUSES, connect, get_request, validate
 
 blueprint = Blueprint('management', __name__)
 
@@ -17,6 +18,24 @@ def require_request(request_id):
 @blueprint.get('/requests/<int:request_id>')
 def detail(request_id):
     return render_template('detail.html', row=require_request(request_id))
+
+
+@blueprint.route('/requests/<int:request_id>/edit', methods=['GET', 'POST'])
+def edit(request_id):
+    values = dict(require_request(request_id))
+    errors = {}
+    if request.method == 'POST':
+        values, errors = validate(request.form)
+        if not errors:
+            with connect(current_app.config['DATABASE']) as db:
+                db.execute('''UPDATE requests SET client=:client,phone=:phone,
+                    device=:device,device_type=:device_type,problem=:problem,
+                    priority=:priority,status=:status,updated=:updated WHERE id=:id''',
+                    {**values, 'updated': datetime.now().isoformat(timespec='seconds'), 'id': request_id})
+            flash(f'Заявка № {request_id} обновлена.', 'success')
+            return redirect(url_for('management.detail', request_id=request_id))
+    return render_template('edit.html', values=values, errors=errors,
+                           request_id=request_id), 422 if errors else 200
 
 
 @blueprint.get('/')

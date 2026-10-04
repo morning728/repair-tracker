@@ -3,7 +3,7 @@
 {% block breadcrumb %}Заявка № {{ row.id }}{% endblock %}
 {% block content %}
 <a class="back" href="/">К списку заявок</a>
-<div class="page-heading"><div><p class="eyebrow">{{ row.device_type }}</p><h1>Заявка № {{ '%04d'|format(row.id) }}</h1></div><div class="heading-actions"><span class="badge {{ {'В работе':'work','Готова':'done','Выдана':'closed'}.get(row.status, '') }}">{{ row.status }}</span>{% block actions %}{% endblock %}</div></div>
+<div class="page-heading"><div><p class="eyebrow">{{ row.device_type }}</p><h1>Заявка № {{ '%04d'|format(row.id) }}</h1></div><div class="heading-actions"><span class="badge {{ {'В работе':'work','Готова':'done','Выдана':'closed'}.get(row.status, '') }}">{{ row.status }}</span><a class="button" href="{{ url_for('management.edit', request_id=row.id) }}">Редактировать</a></div></div>
 <div class="details"><section class="detail-section"><h2>{{ row.device }}</h2><p class="eyebrow">Описание неисправности</p><p class="problem">{{ row.problem }}</p></section><section class="detail-section"><dl><dt>Клиент</dt><dd>{{ row.client }}</dd><dt>Телефон</dt><dd>{{ row.phone }}</dd><dt>Приоритет</dt><dd>{{ row.priority }}</dd><dt>Дата приёма</dt><dd>{{ row.created|date_ru }}</dd><dt>Последнее изменение</dt><dd>{{ row.updated|date_ru }}</dd></dl></section></div>
 {% block delete %}{% endblock %}
 {% endblock %}
