@@ -1,6 +1,7 @@
 """Shared data contract for the two feature branches."""
 
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -9,10 +10,15 @@ PRIORITIES = ('Обычный', 'Высокий', 'Срочный')
 STATUSES = ('Новая', 'В работе', 'Готова', 'Выдана')
 
 
+@contextmanager
 def connect(path):
     db = sqlite3.connect(path, timeout=10)
     db.row_factory = sqlite3.Row
-    return db
+    try:
+        with db:
+            yield db
+    finally:
+        db.close()
 
 
 def initialize(path):
