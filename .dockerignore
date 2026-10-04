@@ -8,3 +8,6 @@ tmp
 *.log
 .env
 ansible
+# CI Python helpers are imported by the build-time unit tests.
+Jenkinsfile*
+.ansible-collections

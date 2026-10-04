@@ -1,5 +1,6 @@
 .venv/
 .ansible-venv/
+.ansible-collections/
 __pycache__/
 *.py[cod]
 data/

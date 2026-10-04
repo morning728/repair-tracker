@@ -1,0 +1,72 @@
+---
+- name: Доставить собранный Jenkins образ и развернуть приложение
+  hosts: repair_servers
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Проверить параметры готового образа
+      ansible.builtin.assert:
+        that:
+          - repair_image_ref is defined
+          - repair_image_archive is defined
+          - repair_image_ref is match('^repair-tracker:[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$')
+        fail_msg: Передайте repair_image_ref и абсолютный путь repair_image_archive.
+
+  tasks:
+    - name: Подготовить Ubuntu и Docker
+      ansible.builtin.import_tasks: tasks/prepare.yml
+
+    - name: Доставить архив готового образа с Jenkins-агента
+      ansible.builtin.copy:
+        src: "{{ repair_image_archive }}"
+        dest: "{{ repair_app_dir }}/repair-image.tar"
+        owner: root
+        group: root
+        mode: "0600"
+      register: repair_archive
+
+    - name: Проверить наличие нужного образа на сервере
+      community.docker.docker_image_info:
+        name: "{{ repair_image_ref }}"
+      register: repair_existing_image
+
+    - name: Загрузить образ из доставленного архива
+      community.docker.docker_image_load:
+        path: "{{ repair_app_dir }}/repair-image.tar"
+        timeout: 600
+      when: repair_archive.changed or repair_existing_image.images | length == 0
+
+    - name: Получить сведения о загруженном образе
+      community.docker.docker_image_info:
+        name: "{{ repair_image_ref }}"
+      register: repair_loaded_image
+
+    - name: Проверить тег и совместимость архитектуры
+      ansible.builtin.assert:
+        that:
+          - repair_loaded_image.images | length == 1
+          - repair_loaded_image.images[0].Architecture == repair_docker_architectures[ansible_facts['architecture']]
+          - repair_loaded_image.images[0].Os == 'linux'
+        fail_msg: Образ отсутствует или архитектура Jenkins-агента не совпадает с сервером.
+
+    - name: Создать Compose для готового образа
+      ansible.builtin.template:
+        src: compose.image.yaml.j2
+        dest: "{{ repair_app_dir }}/compose.yaml"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Запустить доставленный образ без пересборки и реестра
+      community.docker.docker_compose_v2:
+        project_src: "{{ repair_app_dir }}"
+        project_name: "{{ repair_project_name }}"
+        state: present
+        build: never
+        pull: never
+        wait: true
+        wait_timeout: 180
+
+    - name: Проверить готовность приложения
+      ansible.builtin.import_tasks: tasks/verify.yml

@@ -1,0 +1,17 @@
+---
+- name: Проверить HTTP и доступность базы приложения
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ repair_app_port }}/health"
+    status_code: 200
+    return_content: true
+  register: repair_health
+  until: repair_health.status | default(0) == 200 and repair_health.json.status | default('') == 'ok'
+  retries: 12
+  delay: 5
+
+- name: Показать результат развёртывания
+  ansible.builtin.debug:
+    msg:
+      - "Приложение развёрнуто в {{ repair_app_dir }}."
+      - "HTTP-порт: {{ repair_app_port }}, адрес публикации: {{ repair_bind_address }}."
+      - Данные SQLite сохраняются в именованном томе Docker.
