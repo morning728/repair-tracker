@@ -1,0 +1,76 @@
+pipeline {
+    agent { label 'docker-linux' }
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+        timeout(time: 40, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+    parameters {
+        string(name: 'SERVER_HOST', defaultValue: '', description: 'IP или DNS-имя Ubuntu-сервера')
+        string(name: 'SERVER_USER', defaultValue: 'ubuntu', description: 'SSH-пользователь с sudo без пароля')
+        string(name: 'SERVER_SSH_PORT', defaultValue: '22', description: 'SSH-порт сервера')
+        string(name: 'SERVER_APP_PORT', defaultValue: '8080', description: 'HTTP-порт приложения на сервере')
+        string(name: 'SERVER_SSH_CREDENTIAL_ID', defaultValue: 'repair-server-ssh', description: 'Jenkins credential: SSH Username with private key')
+        string(name: 'SERVER_KNOWN_HOSTS_ID', defaultValue: 'repair-server-known-hosts', description: 'Jenkins credential: Secret file с проверенным ключом SSH-сервера')
+    }
+    stages {
+        stage('Получить исходники и плейбук из GitHub') {
+            steps { checkout scm }
+        }
+        stage('Подготовить инструменты и параметры') {
+            steps {
+                script {
+                    def revision = sh(script: 'git rev-parse --short=12 HEAD', returnStdout: true).trim()
+                    env.REPAIR_IMAGE = "repair-tracker:build-${env.BUILD_NUMBER}-${revision}"
+                    env.DEPLOY_HOST = params.SERVER_HOST
+                    env.DEPLOY_USER = params.SERVER_USER
+                    env.DEPLOY_SSH_PORT = params.SERVER_SSH_PORT
+                    env.DEPLOY_APP_PORT = params.SERVER_APP_PORT
+                }
+                sh '''
+                    set -eu
+                    docker version
+                    python3 -m venv .ansible-venv
+                    .ansible-venv/bin/python -m pip install -r ansible/requirements-control.txt
+                    .ansible-venv/bin/ansible-galaxy collection install -r ansible/requirements.yml -p .ansible-collections
+                    python3 ci/prepare_deployment.py
+                '''
+            }
+        }
+        stage('Собрать Docker-образ и выполнить тесты') {
+            steps { sh 'docker build --pull --tag "$REPAIR_IMAGE" .' }
+        }
+        stage('Сохранить образ для доставки') {
+            steps {
+                sh '''
+                    set -eu
+                    docker image save --output tmp/repair-image.tar "$REPAIR_IMAGE"
+                    sha256sum tmp/repair-image.tar > tmp/repair-image.sha256
+                    docker image inspect "$REPAIR_IMAGE" > tmp/image-metadata.json
+                '''
+                archiveArtifacts(artifacts: 'tmp/repair-image.sha256,tmp/image-metadata.json', fingerprint: true)
+            }
+        }
+        stage('Доставить образ и развернуть через Ansible') {
+            steps {
+                sshagent(credentials: [params.SERVER_SSH_CREDENTIAL_ID]) {
+                    withCredentials([file(credentialsId: params.SERVER_KNOWN_HOSTS_ID, variable: 'KNOWN_HOSTS_FILE')]) {
+                        withEnv(["ANSIBLE_CONFIG=${env.WORKSPACE}/ansible/ansible.cfg", "ANSIBLE_COLLECTIONS_PATH=${env.WORKSPACE}/.ansible-collections"]) {
+                            sh '''
+                                set -eu
+                                export ANSIBLE_SSH_COMMON_ARGS="-o StrictHostKeyChecking=yes -o UserKnownHostsFile='$KNOWN_HOSTS_FILE'"
+                                .ansible-venv/bin/ansible-playbook -i tmp/jenkins-inventory.json ansible/deploy_image.yml -e @tmp/deploy-vars.json --syntax-check
+                                .ansible-venv/bin/ansible-playbook -i tmp/jenkins-inventory.json ansible/deploy_image.yml -e @tmp/deploy-vars.json
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success { echo 'Собранный образ доставлен Ansible на Ubuntu-сервер; приложение healthy.' }
+        failure { echo 'Развёртывание не подтверждено. Причина указана в Console Output.' }
+    }
+}

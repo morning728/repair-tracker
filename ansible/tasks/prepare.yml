@@ -1,0 +1,80 @@
+---
+- name: Проверить операционную систему и архитектуру
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Ubuntu'
+      - ansible_facts['distribution_version'] in ['22.04', '24.04']
+      - ansible_facts['architecture'] in repair_docker_architectures
+    fail_msg: Требуется Ubuntu 22.04/24.04 с архитектурой amd64 или arm64.
+
+- name: Проверить настройки развёртывания
+  ansible.builtin.assert:
+    that:
+      - repair_app_port | int >= 1024
+      - repair_app_port | int <= 65535
+      - repair_app_dir is match('^/opt/[a-zA-Z0-9_-]+$')
+      - repair_project_name is match('^[a-z0-9][a-z0-9_-]*$')
+      - repair_bind_address in ['127.0.0.1', '0.0.0.0']
+    fail_msg: Проверьте путь /opt, порт и адрес публикации приложения.
+
+- name: Установить зависимости пакетного менеджера и Docker API
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - python3-apt
+      - python3-requests
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Создать каталог ключей APT
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Получить ключ официального репозитория Docker
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+    validate_certs: true
+
+- name: Подключить официальный репозиторий Docker
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ repair_docker_architectures[ansible_facts['architecture']] }}
+      signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu
+      {{ ansible_facts['distribution_release'] }} stable
+    filename: docker
+    state: present
+    update_cache: true
+
+- name: Установить Docker Engine и Compose
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+
+- name: Включить и запустить Docker
+  ansible.builtin.service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Создать каталог приложения
+  ansible.builtin.file:
+    path: "{{ repair_app_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
