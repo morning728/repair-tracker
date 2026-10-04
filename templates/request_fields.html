@@ -1,0 +1,31 @@
+{% macro text_field(name, label, maxlength, type='text') %}
+<div class="field">
+  <label for="{{ name }}">{{ label }} <span aria-hidden="true">*</span></label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" required maxlength="{{ maxlength }}"
+         value="{{ values.get(name, '') }}" {% if name == 'phone' %}autocomplete="tel"{% endif %}>
+</div>
+{% endmacro %}
+{% macro select_field(name, label, options) %}
+<div class="field">
+  <label for="{{ name }}">{{ label }}</label>
+  <select id="{{ name }}" name="{{ name }}" required>
+    {% if name == 'device_type' %}<option value="">Выберите тип техники</option>{% endif %}
+    {% for option in options %}<option value="{{ option }}" {% if values.get(name) == option %}selected{% endif %}>{{ option }}</option>{% endfor %}
+  </select>
+</div>
+{% endmacro %}
+<fieldset class="form-section"><legend>Клиент</legend><div class="form-grid">
+  {{ text_field('client', 'Имя клиента', 100) }}
+  {{ text_field('phone', 'Телефон', 30, 'tel') }}
+</div></fieldset>
+<fieldset class="form-section"><legend>Техника и неисправность</legend><div class="form-grid">
+  {{ select_field('device_type', 'Тип техники', device_types) }}
+  {{ text_field('device', 'Модель устройства', 150) }}
+  <div class="field full"><label for="problem">Описание неисправности <span aria-hidden="true">*</span></label>
+    <textarea id="problem" name="problem" required maxlength="2000" rows="4">{{ values.get('problem', '') }}</textarea>
+  </div>
+</div></fieldset>
+<fieldset class="form-section"><legend>Обработка заявки</legend><div class="form-grid">
+  {{ select_field('priority', 'Приоритет', priorities) }}
+  {{ select_field('status', 'Статус', statuses) }}
+</div></fieldset>
