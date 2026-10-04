@@ -123,6 +123,26 @@ python -m pip install -r requirements-check.txt
 python check_config.py
 ```
 
+Проверка Ansible в Linux-контейнере с Windows описана в `../ci/README.md`.
+Реальный прогон `deploy.yml` требует настройки inventory и SSH-доступа.
+
+## Доставка готового образа из Jenkins
+
+Для следующей практики добавлен `deploy_image.yml`. Он использует ту же
+подготовку Ubuntu и проверку HTTP, но вместо исходников доставляет архив
+образа, загружает его в Docker и запускает без повторной сборки.
+Пример ручного вызова с Linux-управляющей машины:
+
+```bash
+docker image save -o /tmp/repair-image.tar repair-tracker:validation
+ansible-playbook deploy_image.yml --ask-become-pass \
+  -e repair_image_ref=repair-tracker:validation \
+  -e repair_image_archive=/tmp/repair-image.tar
+```
+
+Образ предварительно должен быть собран с указанным тегом. Автоматическое
+сохранение и вызов плейбука реализованы в `../Jenkinsfile.ansible`.
+
 ## Объяснение для зачёта
 
 Inventory описывает сервер и SSH-подключение. `group_vars` содержит путь,

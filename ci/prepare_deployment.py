@@ -25,6 +25,7 @@ def write_configuration(values, workspace):
     inventory = {'repair_servers': {'hosts': {'repair-server': {
         'ansible_host': host, 'ansible_user': user, 'ansible_port': ssh_port,
         'ansible_python_interpreter': '/usr/bin/python3',
+        'ansible_become_password': "{{ lookup('ansible.builtin.env', 'DEPLOY_SUDO_PASSWORD', default='') }}",
     }}}}
     extra_vars = {'repair_image_ref': image,
                   'repair_image_archive': str((target / 'repair-image.tar').resolve()),

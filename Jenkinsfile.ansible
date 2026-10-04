@@ -8,11 +8,12 @@ pipeline {
     }
     parameters {
         string(name: 'SERVER_HOST', defaultValue: '', description: 'IP или DNS-имя Ubuntu-сервера')
-        string(name: 'SERVER_USER', defaultValue: 'ubuntu', description: 'SSH-пользователь с sudo без пароля')
+        string(name: 'SERVER_USER', defaultValue: 'ubuntu', description: 'SSH-пользователь с правами sudo')
         string(name: 'SERVER_SSH_PORT', defaultValue: '22', description: 'SSH-порт сервера')
         string(name: 'SERVER_APP_PORT', defaultValue: '8080', description: 'HTTP-порт приложения на сервере')
         string(name: 'SERVER_SSH_CREDENTIAL_ID', defaultValue: 'repair-server-ssh', description: 'Jenkins credential: SSH Username with private key')
         string(name: 'SERVER_KNOWN_HOSTS_ID', defaultValue: 'repair-server-known-hosts', description: 'Jenkins credential: Secret file с проверенным ключом SSH-сервера')
+        string(name: 'SERVER_SUDO_CREDENTIAL_ID', defaultValue: '', description: 'Необязательный Secret text с паролем sudo; пусто при sudo без пароля')
     }
     stages {
         stage('Получить исходники и плейбук из GitHub') {
@@ -57,12 +58,23 @@ pipeline {
                 sshagent(credentials: [params.SERVER_SSH_CREDENTIAL_ID]) {
                     withCredentials([file(credentialsId: params.SERVER_KNOWN_HOSTS_ID, variable: 'KNOWN_HOSTS_FILE')]) {
                         withEnv(["ANSIBLE_CONFIG=${env.WORKSPACE}/ansible/ansible.cfg", "ANSIBLE_COLLECTIONS_PATH=${env.WORKSPACE}/.ansible-collections"]) {
-                            sh '''
-                                set -eu
-                                export ANSIBLE_SSH_COMMON_ARGS="-o StrictHostKeyChecking=yes -o UserKnownHostsFile='$KNOWN_HOSTS_FILE'"
-                                .ansible-venv/bin/ansible-playbook -i tmp/jenkins-inventory.json ansible/deploy_image.yml -e @tmp/deploy-vars.json --syntax-check
-                                .ansible-venv/bin/ansible-playbook -i tmp/jenkins-inventory.json ansible/deploy_image.yml -e @tmp/deploy-vars.json
-                            '''
+                            script {
+                                def deploy = {
+                                    sh '''
+                                        set -eu
+                                        export ANSIBLE_SSH_COMMON_ARGS="-o StrictHostKeyChecking=yes -o UserKnownHostsFile='$KNOWN_HOSTS_FILE'"
+                                        .ansible-venv/bin/ansible-playbook -i tmp/jenkins-inventory.json ansible/deploy_image.yml -e @tmp/deploy-vars.json --syntax-check
+                                        .ansible-venv/bin/ansible-playbook -i tmp/jenkins-inventory.json ansible/deploy_image.yml -e @tmp/deploy-vars.json
+                                    '''
+                                }
+                                if (params.SERVER_SUDO_CREDENTIAL_ID.trim()) {
+                                    withCredentials([string(credentialsId: params.SERVER_SUDO_CREDENTIAL_ID, variable: 'DEPLOY_SUDO_PASSWORD')]) {
+                                        deploy()
+                                    }
+                                } else {
+                                    deploy()
+                                }
+                            }
                         }
                     }
                 }
