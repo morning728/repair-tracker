@@ -38,6 +38,15 @@ def edit(request_id):
                            request_id=request_id), 422 if errors else 200
 
 
+@blueprint.post('/requests/<int:request_id>/delete')
+def delete(request_id):
+    require_request(request_id)
+    with connect(current_app.config['DATABASE']) as db:
+        db.execute('DELETE FROM requests WHERE id=?', (request_id,))
+    flash(f'Заявка № {request_id} удалена.', 'success')
+    return redirect(url_for('management.index'))
+
+
 @blueprint.get('/')
 def index():
     query = request.args.get('q', '').strip()[:150]
