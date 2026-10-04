@@ -5,6 +5,7 @@
 <a class="back" href="/">К списку заявок</a>
 <div class="page-heading"><div><p class="eyebrow">Приём техники</p><h1>Новая заявка</h1></div></div>
 <form class="form-surface" method="post">
+  {% if errors %}<div class="notice error" role="alert">Проверьте отмеченные поля. Введённые данные сохранены.</div>{% endif %}
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   {% include 'request_fields.html' %}
   <div class="form-actions"><a class="button" href="/">Отмена</a><button class="button primary" type="submit">Создать заявку</button></div>

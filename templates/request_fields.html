@@ -2,16 +2,19 @@
 <div class="field">
   <label for="{{ name }}">{{ label }} <span aria-hidden="true">*</span></label>
   <input id="{{ name }}" name="{{ name }}" type="{{ type }}" required maxlength="{{ maxlength }}"
-         value="{{ values.get(name, '') }}" {% if name == 'phone' %}autocomplete="tel"{% endif %}>
+         value="{{ values.get(name, '') }}" {% if name == 'phone' %}autocomplete="tel"{% endif %}
+         {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>
+  {% if errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}
 </div>
 {% endmacro %}
 {% macro select_field(name, label, options) %}
 <div class="field">
   <label for="{{ name }}">{{ label }}</label>
-  <select id="{{ name }}" name="{{ name }}" required>
+  <select id="{{ name }}" name="{{ name }}" required {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>
     {% if name == 'device_type' %}<option value="">Выберите тип техники</option>{% endif %}
     {% for option in options %}<option value="{{ option }}" {% if values.get(name) == option %}selected{% endif %}>{{ option }}</option>{% endfor %}
   </select>
+  {% if errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}
 </div>
 {% endmacro %}
 <fieldset class="form-section"><legend>Клиент</legend><div class="form-grid">
@@ -22,7 +25,8 @@
   {{ select_field('device_type', 'Тип техники', device_types) }}
   {{ text_field('device', 'Модель устройства', 150) }}
   <div class="field full"><label for="problem">Описание неисправности <span aria-hidden="true">*</span></label>
-    <textarea id="problem" name="problem" required maxlength="2000" rows="4">{{ values.get('problem', '') }}</textarea>
+    <textarea id="problem" name="problem" required maxlength="2000" rows="4" {% if errors.get('problem') %}aria-invalid="true" aria-describedby="problem-error"{% endif %}>{{ values.get('problem', '') }}</textarea>
+    {% if errors.get('problem') %}<p class="field-error" id="problem-error">{{ errors.problem }}</p>{% endif %}
   </div>
 </div></fieldset>
 <fieldset class="form-section"><legend>Обработка заявки</legend><div class="form-grid">
