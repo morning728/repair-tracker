@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Новая заявка{% endblock %}
+{% block breadcrumb %}Новая заявка{% endblock %}
+{% block content %}
+<a class="back" href="/">К списку заявок</a>
+<div class="page-heading"><div><p class="eyebrow">Приём техники</p><h1>Новая заявка</h1></div></div>
+<form class="form-surface" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% block fields %}{% endblock %}
+  <div class="form-actions"><a class="button" href="/">Отмена</a><button class="button primary" type="submit">Создать заявку</button></div>
+</form>
+{% endblock %}
