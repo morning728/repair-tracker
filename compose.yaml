@@ -1,0 +1,14 @@
+name: repair-tracker
+services:
+  web:
+    build: .
+    image: repair-tracker:local
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8000"
+    volumes:
+      - repair-data:/app/data
+    restart: unless-stopped
+    stop_grace_period: 20s
+
+volumes:
+  repair-data:

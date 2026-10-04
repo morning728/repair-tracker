@@ -7,7 +7,7 @@ from pathlib import Path
 
 from flask import Flask, abort, render_template, request, session
 
-from store import DEVICE_TYPES, PRIORITIES, STATUSES, initialize
+from store import DEVICE_TYPES, PRIORITIES, STATUSES, connect, initialize
 
 
 def create_app(database=None):
@@ -18,6 +18,12 @@ def create_app(database=None):
         SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax',
     )
     initialize(app.config['DATABASE'])
+
+    @app.get('/health')
+    def health():
+        with connect(app.config['DATABASE']) as db:
+            db.execute('SELECT 1 FROM requests LIMIT 1')
+        return {'status': 'ok'}
 
     @app.before_request
     def protect_forms():

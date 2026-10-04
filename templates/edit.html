@@ -4,18 +4,11 @@
 {% block content %}
 <a class="back" href="{{ url_for('management.detail', request_id=request_id) }}">К карточке заявки</a>
 <div class="page-heading"><div><p class="eyebrow">Заявка № {{ '%04d'|format(request_id) }}</p><h1>Редактирование заявки</h1></div></div>
-<form class="form-surface" method="post">
+<form class="form-surface" method="post" data-request-form>
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   {% if errors %}<div class="notice error" role="alert">Проверьте отмеченные поля. Введённые данные сохранены.</div>{% endif %}
-  <div class="form-grid">
-    {% for name, label, limit in [('client','Имя клиента',100),('phone','Телефон',30),('device','Модель устройства',150)] %}
-    <div class="field"><label for="{{ name }}">{{ label }} *</label><input id="{{ name }}" name="{{ name }}" value="{{ values[name] }}" maxlength="{{ limit }}" required {% if name == 'phone' %}type="tel"{% endif %} {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>{% if errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}</div>
-    {% endfor %}
-    {% for name, label, options in [('device_type','Тип техники',device_types),('priority','Приоритет',priorities),('status','Статус',statuses)] %}
-    <div class="field"><label for="{{ name }}">{{ label }}</label><select id="{{ name }}" name="{{ name }}" required {% if errors.get(name) %}aria-invalid="true"{% endif %}>{% for option in options %}<option {% if option == values[name] %}selected{% endif %}>{{ option }}</option>{% endfor %}</select>{% if errors.get(name) %}<p class="field-error">{{ errors[name] }}</p>{% endif %}</div>
-    {% endfor %}
-    <div class="field full"><label for="problem">Описание неисправности *</label><textarea id="problem" name="problem" rows="4" maxlength="2000" required {% if errors.get('problem') %}aria-invalid="true"{% endif %}>{{ values.problem }}</textarea>{% if errors.get('problem') %}<p class="field-error">{{ errors.problem }}</p>{% endif %}</div>
-  </div>
-  <div class="form-actions"><a class="button" href="{{ url_for('management.detail', request_id=request_id) }}">Отмена</a><button class="button primary" type="submit">Сохранить изменения</button></div>
+  {% include 'request_fields.html' %}
+  <div class="form-actions"><a class="button" href="{{ url_for('management.detail', request_id=request_id) }}">Отмена</a><button class="button primary" type="submit" data-label="Сохранить изменения">Сохранить изменения</button></div>
 </form>
+<script src="{{ url_for('static', filename='form.js') }}" defer></script>
 {% endblock %}
