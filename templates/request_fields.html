@@ -27,6 +27,7 @@
   <div class="field full"><label for="problem">Описание неисправности <span aria-hidden="true">*</span></label>
     <textarea id="problem" name="problem" required maxlength="2000" rows="4" {% if errors.get('problem') %}aria-invalid="true" aria-describedby="problem-error"{% endif %}>{{ values.get('problem', '') }}</textarea>
     {% if errors.get('problem') %}<p class="field-error" id="problem-error">{{ errors.problem }}</p>{% endif %}
+    <p class="subtext" id="problem-count" aria-live="off">{{ values.get('problem', '')|length }} / 2000</p>
   </div>
 </div></fieldset>
 <fieldset class="form-section"><legend>Обработка заявки</legend><div class="form-grid">
