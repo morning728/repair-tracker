@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Ошибка {{ error.code }}{% endblock %}
+{% block content %}<div class="empty"><p class="eyebrow">Ошибка {{ error.code }}</p><h1>{{ 'Страница не найдена' if error.code == 404 else 'Не удалось выполнить действие' }}</h1><p>{{ error.description }}</p><a class="button primary" href="/">К заявкам</a></div>{% endblock %}

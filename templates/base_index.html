@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Сервисный центр</p><h1>Заявки на ремонт</h1></div>{% if has_create %}<a class="button primary" href="{{ url_for('creation.new_request') }}">+ Новая заявка</a>{% endif %}</div>
+<div class="empty"><h2>Заявок пока нет</h2><p>Каталог заявок</p></div>
+{% endblock %}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Заявки{% endblock %} · Ремонт</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/">Ремонт<span>Сервисный центр</span></a>
+    <nav aria-label="Основная навигация">
+      <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Заявки</a>
+      {% if has_create %}<a class="nav-link {% if request.path == '/requests/new' %}active{% endif %}" href="{{ url_for('creation.new_request') }}">Новая заявка</a>{% endif %}
+    </nav>
+    <div class="sidebar-bottom"><span class="online-dot"></span> Локальная база</div>
+  </aside>
+  <main>
+    <header class="topbar"><span>Сервисный центр / {% block breadcrumb %}Заявки{% endblock %}</span><span class="workspace">Рабочее пространство</span></header>
+    <div class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}<div class="notice {{ category }}" role="status">{{ message }}</div>{% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</body>
+</html>
