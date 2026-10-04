@@ -3,6 +3,8 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import subprocess
+import shutil
+import sys
 
 import yaml
 from jinja2 import Environment, StrictUndefined
@@ -35,6 +37,17 @@ def check():
     for source in copy_task['loop']:
         assert (ROOT.parent / source).exists(), f'Missing deployment source: {source}'
         assert source not in ('.git', '.venv', 'data', 'ansible'), source
+    # Run tests against only the delivered files, not the full checkout.
+    with TemporaryDirectory() as directory:
+        for source in copy_task['loop']:
+            path = ROOT.parent / source
+            target = Path(directory) / source
+            if path.is_dir():
+                shutil.copytree(path, target, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+            else:
+                shutil.copy2(path, target)
+        subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-v'],
+                       cwd=directory, check=True)
     compose_task = next(t for t in tasks if 'community.docker.docker_compose_v2' in t)
     assert compose_task['community.docker.docker_compose_v2']['wait'] is True
     template = Environment(undefined=StrictUndefined).from_string(
