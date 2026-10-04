@@ -2,9 +2,21 @@ from math import ceil
 
 from flask import Blueprint, abort, current_app, render_template, request
 
-from store import DEVICE_TYPES, STATUSES, connect
+from store import DEVICE_TYPES, STATUSES, connect, get_request
 
 blueprint = Blueprint('management', __name__)
+
+
+def require_request(request_id):
+    row = get_request(current_app.config['DATABASE'], request_id)
+    if row is None:
+        abort(404, description='Заявка не найдена.')
+    return row
+
+
+@blueprint.get('/requests/<int:request_id>')
+def detail(request_id):
+    return render_template('detail.html', row=require_request(request_id))
 
 
 @blueprint.get('/')
