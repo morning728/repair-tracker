@@ -236,7 +236,7 @@ Docker-образа на Ubuntu-сервер и его развёртывани�
 
 ### Создание Jenkins-задачи
 
-Создайте вторую Pipeline job, например `repair-tracker-server`, с тем же
+Создайте вторую Pipeline job, напcример `repair-tracker-server`, с тем же
 репозиторием и веткой, но укажите путь `Jenkinsfile.ansible`.
 
 При запуске задайте параметры:

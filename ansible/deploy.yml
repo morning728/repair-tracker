@@ -28,6 +28,7 @@
         - static
         - templates
         - tests
+        - ci
       register: repair_sources
 
     - name: Создать серверную конфигурацию Compose
