@@ -25,7 +25,10 @@ class PipelineConfigurationTests(unittest.TestCase):
         self.assertEqual(host['ansible_port'], 22)
         variables = json.loads((self.workspace / 'tmp/deploy-vars.json').read_text())
         self.assertEqual(variables['repair_image_ref'], self.values['REPAIR_IMAGE'])
-        self.assertEqual(Path(variables['repair_image_archive']), self.workspace / 'tmp/repair-image.tar')
+        self.assertEqual(
+            Path(variables['repair_image_archive']).resolve(),
+            (self.workspace / 'tmp/repair-image.tar').resolve(),
+        )
 
     def test_invalid_parameters_are_rejected(self):
         for key, value in [('DEPLOY_HOST', ''), ('DEPLOY_HOST', 'host; echo bad'),
@@ -33,6 +36,14 @@ class PipelineConfigurationTests(unittest.TestCase):
                            ('DEPLOY_APP_PORT', '99999'), ('REPAIR_IMAGE', 'bad image')]:
             with self.subTest(key=key, value=value), self.assertRaises(ValueError):
                 write_configuration({**self.values, key: value}, self.workspace)
+
+    def test_pipeline_reinstalls_collection_in_workspace(self):
+        pipeline = (Path(__file__).resolve().parents[1] / 'Jenkinsfile.ansible').read_text()
+        self.assertIn('ANSIBLE_COLLECTIONS_PATH=${env.WORKSPACE}/.ansible-collections', pipeline)
+        self.assertIn(
+            'ansible-galaxy collection install -r ansible/requirements.yml -p .ansible-collections --force',
+            pipeline,
+        )
 
 
 if __name__ == '__main__':

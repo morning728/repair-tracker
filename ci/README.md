@@ -7,7 +7,9 @@ GitHub хранит приложение, Dockerfile, Jenkinsfile и плейб�
 «Сервер» может быть VM на личном компьютере; контейнер запускается уже на нём.
 Одну VM можно использовать для всех практик развёртывания.
 
-Нужен работающий Jenkins и Linux-агент с меткой `docker-linux`. На агенте
+Нужен работающий Jenkins и Linux-агент с меткой `docker-linux`. Jenkins
+контроллер и Docker Desktop могут находиться на macOS или Windows; команды
+Pipeline всё равно выполняются внутри Linux-агента. На агенте
 должны быть Git, Python 3.12+, venv, SSH-клиент, Docker и Compose v2.18+.
 Пользователь агента должен иметь доступ к Docker. Плагины Jenkins: Pipeline,
 Git, Credentials Binding, SSH Agent. Обычный Windows-агент не подходит:
@@ -18,6 +20,30 @@ Dockerfile запускает тесты при сборке и содержит
 Агенту нужен доступ к GitHub, Docker Hub, PyPI и Ansible Galaxy.
 
 ## Практика № 4
+
+### Быстрый локальный Jenkins на macOS или Windows
+
+Для учебного запуска можно использовать Jenkins-контроллер как единственный
+Linux-исполнитель. Он запускается в Docker Desktop и получает метку
+`docker-linux`, поэтому выполняет `Jenkinsfile` без Windows-команд. Команды
+выполняются из корня репозитория:
+
+```bash
+docker build -f ci/jenkins-controller.Dockerfile -t repair-jenkins:local ci
+docker run -d --name repair-jenkins --user root -p 127.0.0.1:8088:8080 \
+  -v repair-jenkins-home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e JAVA_OPTS='-Djenkins.install.runSetupWizard=false -Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true' \
+  repair-jenkins:local
+```
+
+На macOS и Windows Docker Desktop предоставляет Linux-сокет внутри контейнера;
+в PowerShell перенесите команду на одну строку или используйте обратную кавычку
+для переноса. Откройте `http://127.0.0.1:8088`, создайте Pipeline job из SCM
+с `Jenkinsfile` и веткой `*/master`. Этот режим предназначен только для
+локальной учебной машины: CSRF-защита отключена, а контейнер получает доступ к
+Docker-хосту; параметр `--user root` нужен только для доступа к socket. После демонстрации остановите контроллер командой
+`docker stop repair-jenkins`; том `repair-jenkins-home` сохраняет настройки.
 
 Для контейнерного агента подготовлен `ci/agent.Dockerfile` на базе официального
 Jenkins inbound-agent (Debian Trixie, Java 21). Он включает Python 3.12+,
@@ -68,6 +94,11 @@ Jenkins-агенте по http://localhost:8081, данные находятся
 Compose и `/health`. На сервере не выполняется повторная сборка приложения
 и не используется реестр образов.
 
+Перед запуском плейбука Jenkins принудительно устанавливает
+`community.docker` в `.ansible-collections` текущего workspace. Это исключает
+ситуацию, когда коллекция есть в системном каталоге агента, но недоступна
+Ansible по `ANSIBLE_COLLECTIONS_PATH`.
+
 Настройте Jenkins Credentials:
 
 | ID | Тип | Значение |
@@ -90,6 +121,15 @@ Compose и `/health`. На сервере не выполняется повто
 При первом запуске Jenkins читает параметры из SCM. Пустой SERVER_HOST
 приведёт к остановке до сборки; повторите Build with Parameters с настоящим IP.
 
+При связке Docker Desktop и Multipass на macOS или Windows контейнер Jenkins
+может не иметь маршрута к приватному IP VM. Временный вариант для учебного
+стенда — оставить на хосте открытым туннель
+`ssh -N -g -L 127.0.0.1:2222:SERVER_IP:22 USER@SERVER_IP` и передать Pipeline
+`SERVER_HOST=host.docker.internal`, `SERVER_SSH_PORT=2222`. Это только
+транспорт: credential `repair-server-ssh` всё равно используется Jenkins для
+аутентификации на VM. На постоянном стенде настройте прямую сеть Linux-агента
+и VM.
+
 Серверу нужен доступ к Docker APT-репозиторию для первой установки Docker,
 но не к Docker Hub или PyPI для сборки приложения. Открытие результата:
 
@@ -107,12 +147,20 @@ python -m unittest discover -s tests -v
 python ansible/check_config.py
 ```
 
-Проверка Ansible в Linux-контейнере с Windows, из корня проекта:
+Проверка Ansible в Linux-контейнере из корня проекта. На macOS/Linux:
 
-```powershell
+```bash
 docker build -f ansible/controller.Dockerfile -t repair-ansible:local ansible
 docker run --rm --mount "type=bind,source=$PWD,target=/workspace,readonly" repair-ansible:local -i inventory.ini.example deploy.yml --syntax-check
 docker run --rm --mount "type=bind,source=$PWD,target=/workspace,readonly" repair-ansible:local -i inventory.ini.example deploy_image.yml -e repair_image_ref=repair-tracker:validation -e repair_image_archive=/workspace/tmp/repair-image.tar --syntax-check
+```
+
+В Windows PowerShell замените `source=$PWD` на `source=$($PWD.Path)`:
+
+```powershell
+docker build -f ansible/controller.Dockerfile -t repair-ansible:local ansible
+docker run --rm --mount "type=bind,source=$($PWD.Path),target=/workspace,readonly" repair-ansible:local -i inventory.ini.example deploy.yml --syntax-check
+docker run --rm --mount "type=bind,source=$($PWD.Path),target=/workspace,readonly" repair-ansible:local -i inventory.ini.example deploy_image.yml -e repair_image_ref=repair-tracker:validation -e repair_image_archive=/workspace/tmp/repair-image.tar --syntax-check
 ```
 
 Это не развёртывает приложение на сервере. Jenkins Pipeline DSL проверяется
