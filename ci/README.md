@@ -7,7 +7,9 @@ GitHub хранит приложение, Dockerfile, Jenkinsfile и плейб�
 «Сервер» может быть VM на личном компьютере; контейнер запускается уже на нём.
 Одну VM можно использовать для всех практик развёртывания.
 
-Нужен работающий Jenkins и Linux-агент с меткой `docker-linux`. На агенте
+Нужен работающий Jenkins и Linux-агент с меткой `docker-linux`. Jenkins
+контроллер и Docker Desktop могут находиться на macOS или Windows; команды
+Pipeline всё равно выполняются внутри Linux-агента. На агенте
 должны быть Git, Python 3.12+, venv, SSH-клиент, Docker и Compose v2.18+.
 Пользователь агента должен иметь доступ к Docker. Плагины Jenkins: Pipeline,
 Git, Credentials Binding, SSH Agent. Обычный Windows-агент не подходит:
@@ -107,12 +109,20 @@ python -m unittest discover -s tests -v
 python ansible/check_config.py
 ```
 
-Проверка Ansible в Linux-контейнере с Windows, из корня проекта:
+Проверка Ansible в Linux-контейнере из корня проекта. На macOS/Linux:
 
-```powershell
+```bash
 docker build -f ansible/controller.Dockerfile -t repair-ansible:local ansible
 docker run --rm --mount "type=bind,source=$PWD,target=/workspace,readonly" repair-ansible:local -i inventory.ini.example deploy.yml --syntax-check
 docker run --rm --mount "type=bind,source=$PWD,target=/workspace,readonly" repair-ansible:local -i inventory.ini.example deploy_image.yml -e repair_image_ref=repair-tracker:validation -e repair_image_archive=/workspace/tmp/repair-image.tar --syntax-check
+```
+
+В Windows PowerShell замените `source=$PWD` на `source=$($PWD.Path)`:
+
+```powershell
+docker build -f ansible/controller.Dockerfile -t repair-ansible:local ansible
+docker run --rm --mount "type=bind,source=$($PWD.Path),target=/workspace,readonly" repair-ansible:local -i inventory.ini.example deploy.yml --syntax-check
+docker run --rm --mount "type=bind,source=$($PWD.Path),target=/workspace,readonly" repair-ansible:local -i inventory.ini.example deploy_image.yml -e repair_image_ref=repair-tracker:validation -e repair_image_archive=/workspace/tmp/repair-image.tar --syntax-check
 ```
 
 Это не развёртывает приложение на сервере. Jenkins Pipeline DSL проверяется
