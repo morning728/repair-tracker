@@ -7,13 +7,13 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
     parameters {
-        string(name: 'SERVER_HOST', defaultValue: '192.168.1.230', description: 'IP или DNS-имя Ubuntu-сервера')
-        string(name: 'SERVER_USER', defaultValue: 'morning728', description: 'SSH-пользователь с правами sudo')
+        string(name: 'SERVER_HOST', defaultValue: '', description: 'IP или DNS-имя Ubuntu-сервера')
+        string(name: 'SERVER_USER', defaultValue: 'ubuntu', description: 'SSH-пользователь с правами sudo')
         string(name: 'SERVER_SSH_PORT', defaultValue: '22', description: 'SSH-порт сервера')
         string(name: 'SERVER_APP_PORT', defaultValue: '8080', description: 'HTTP-порт приложения на сервере')
         string(name: 'SERVER_SSH_CREDENTIAL_ID', defaultValue: 'repair-server-ssh', description: 'Jenkins credential: SSH Username with private key')
         string(name: 'SERVER_KNOWN_HOSTS_ID', defaultValue: 'repair-server-known-hosts', description: 'Jenkins credential: Secret file с проверенным ключом SSH-сервера')
-        string(name: 'SERVER_SUDO_CREDENTIAL_ID', defaultValue: 'repair-server-sudo', description: 'Необязательный Secret text с паролем sudo; пусто при sudo без пароля')
+        string(name: 'SERVER_SUDO_CREDENTIAL_ID', defaultValue: '', description: 'Необязательный Secret text с паролем sudo; пусто при sudo без пароля')
     }
     stages {
         stage('Получить исходники и плейбук из GitHub') {
