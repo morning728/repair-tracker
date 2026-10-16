@@ -121,6 +121,15 @@ Ansible по `ANSIBLE_COLLECTIONS_PATH`.
 При первом запуске Jenkins читает параметры из SCM. Пустой SERVER_HOST
 приведёт к остановке до сборки; повторите Build with Parameters с настоящим IP.
 
+При связке Docker Desktop и Multipass на macOS или Windows контейнер Jenkins
+может не иметь маршрута к приватному IP VM. Временный вариант для учебного
+стенда — оставить на хосте открытым туннель
+`ssh -N -g -L 127.0.0.1:2222:SERVER_IP:22 USER@SERVER_IP` и передать Pipeline
+`SERVER_HOST=host.docker.internal`, `SERVER_SSH_PORT=2222`. Это только
+транспорт: credential `repair-server-ssh` всё равно используется Jenkins для
+аутентификации на VM. На постоянном стенде настройте прямую сеть Linux-агента
+и VM.
+
 Серверу нужен доступ к Docker APT-репозиторию для первой установки Docker,
 но не к Docker Hub или PyPI для сборки приложения. Открытие результата:
 
