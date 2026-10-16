@@ -21,6 +21,30 @@ Dockerfile запускает тесты при сборке и содержит
 
 ## Практика № 4
 
+### Быстрый локальный Jenkins на macOS или Windows
+
+Для учебного запуска можно использовать Jenkins-контроллер как единственный
+Linux-исполнитель. Он запускается в Docker Desktop и получает метку
+`docker-linux`, поэтому выполняет `Jenkinsfile` без Windows-команд. Команды
+выполняются из корня репозитория:
+
+```bash
+docker build -f ci/jenkins-controller.Dockerfile -t repair-jenkins:local ci
+docker run -d --name repair-jenkins --user root -p 127.0.0.1:8088:8080 \
+  -v repair-jenkins-home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e JAVA_OPTS='-Djenkins.install.runSetupWizard=false -Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true' \
+  repair-jenkins:local
+```
+
+На macOS и Windows Docker Desktop предоставляет Linux-сокет внутри контейнера;
+в PowerShell перенесите команду на одну строку или используйте обратную кавычку
+для переноса. Откройте `http://127.0.0.1:8088`, создайте Pipeline job из SCM
+с `Jenkinsfile` и веткой `*/master`. Этот режим предназначен только для
+локальной учебной машины: CSRF-защита отключена, а контейнер получает доступ к
+Docker-хосту; параметр `--user root` нужен только для доступа к socket. После демонстрации остановите контроллер командой
+`docker stop repair-jenkins`; том `repair-jenkins-home` сохраняет настройки.
+
 Для контейнерного агента подготовлен `ci/agent.Dockerfile` на базе официального
 Jenkins inbound-agent (Debian Trixie, Java 21). Он включает Python 3.12+,
 venv, Git, SSH, Docker CLI, Buildx и Compose. Сборка:
