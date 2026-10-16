@@ -39,7 +39,9 @@ pipeline {
             }
         }
         stage('Проверить приложение') {
-            steps { sh 'python3 ci/check_health.py "http://127.0.0.1:$APP_PORT/health"' }
+            steps {
+                sh 'docker compose --project-name repair-tracker-ci -f ci/compose.yaml exec -T web python - http://127.0.0.1:8000/health < ci/check_health.py'
+            }
         }
     }
     post {

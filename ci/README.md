@@ -19,6 +19,28 @@ Dockerfile запускает тесты при сборке и содержит
 
 ## Практика № 4
 
+Для контейнерного агента подготовлен `ci/agent.Dockerfile` на базе официального
+Jenkins inbound-agent (Debian Trixie, Java 21). Он включает Python 3.12+,
+venv, Git, SSH, Docker CLI, Buildx и Compose. Сборка:
+
+```bash
+docker build -f ci/agent.Dockerfile -t repair-jenkins-agent:local ci
+```
+
+Агент подключается через WebSocket к `http://repair-jenkins:8080/` в общей
+Docker-сети контроллера и агента. Секрет подключения вводится только локально,
+не хранится в Git. Имя узла `repair-agent`, метка `docker-linux`, один
+исполнитель, рабочая директория `/home/jenkins/agent`.
+
+Для учебного стенда агенту можно передать `/var/run/docker.sock` Docker Desktop.
+Такой доступ даёт управление Docker-хостом: запускайте только доверенные задания,
+не подключайте непроверенные pull requests и не монтируйте каталог данных Jenkins
+в агент. При запуске с `--user root` решается доступ к сокету; это не изоляция
+от Docker-хоста и не рекомендация для общего production-сервера.
+
+HTTP-проверка выполняется внутри контейнера приложения через Compose exec:
+localhost контейнерного агента не является localhost хоста Docker Desktop.
+
 1. Создайте Pipeline job `repair-tracker-local`.
 2. Definition → Pipeline script from SCM, SCM → Git.
 3. Repository URL: `https://github.com/morning728/repair-tracker.git`.
