@@ -25,7 +25,10 @@ class PipelineConfigurationTests(unittest.TestCase):
         self.assertEqual(host['ansible_port'], 22)
         variables = json.loads((self.workspace / 'tmp/deploy-vars.json').read_text())
         self.assertEqual(variables['repair_image_ref'], self.values['REPAIR_IMAGE'])
-        self.assertEqual(Path(variables['repair_image_archive']), self.workspace / 'tmp/repair-image.tar')
+        self.assertEqual(
+            Path(variables['repair_image_archive']).resolve(),
+            (self.workspace / 'tmp/repair-image.tar').resolve(),
+        )
 
     def test_invalid_parameters_are_rejected(self):
         for key, value in [('DEPLOY_HOST', ''), ('DEPLOY_HOST', 'host; echo bad'),
