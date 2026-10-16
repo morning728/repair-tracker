@@ -34,7 +34,7 @@ pipeline {
                     docker version
                     python3 -m venv .ansible-venv
                     .ansible-venv/bin/python -m pip install -r ansible/requirements-control.txt
-                    .ansible-venv/bin/ansible-galaxy collection install -r ansible/requirements.yml -p .ansible-collections
+                    .ansible-venv/bin/ansible-galaxy collection install -r ansible/requirements.yml -p .ansible-collections --force
                     python3 ci/prepare_deployment.py
                 '''
             }

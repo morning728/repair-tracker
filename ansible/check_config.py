@@ -37,9 +37,9 @@ def check():
     for source in copy_task['loop']:
         assert (ROOT.parent / source).exists(), f'Missing deployment source: {source}'
         assert source not in ('.git', '.venv', 'data', 'ansible'), source
-    # Run tests against only the delivered files, not the full checkout.
+    # Run tests against delivered files and the Jenkins Pipeline that prepares them.
     with TemporaryDirectory() as directory:
-        for source in copy_task['loop']:
+        for source in [*copy_task['loop'], 'Jenkinsfile.ansible']:
             path = ROOT.parent / source
             target = Path(directory) / source
             if path.is_dir():

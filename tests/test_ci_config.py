@@ -37,6 +37,14 @@ class PipelineConfigurationTests(unittest.TestCase):
             with self.subTest(key=key, value=value), self.assertRaises(ValueError):
                 write_configuration({**self.values, key: value}, self.workspace)
 
+    def test_pipeline_reinstalls_collection_in_workspace(self):
+        pipeline = (Path(__file__).resolve().parents[1] / 'Jenkinsfile.ansible').read_text()
+        self.assertIn('ANSIBLE_COLLECTIONS_PATH=${env.WORKSPACE}/.ansible-collections', pipeline)
+        self.assertIn(
+            'ansible-galaxy collection install -r ansible/requirements.yml -p .ansible-collections --force',
+            pipeline,
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
