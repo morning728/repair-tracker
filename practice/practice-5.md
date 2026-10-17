@@ -40,17 +40,11 @@ Script Path `Jenkinsfile.ansible`. Сам Pipeline работает на Linux-�
 паролей.
 
 Если Jenkins запущен в Docker Desktop, а Ubuntu VM Multipass доступна только
-хостовой ОС, Linux-контейнер может не видеть её приватный IP. На время учебного
-запуска создайте на macOS или в PowerShell SSH-туннель хоста и передайте в job
-`SERVER_HOST=host.docker.internal`, `SERVER_SSH_PORT=2222`:
-
-```bash
-ssh -N -g -L 127.0.0.1:2222:SERVER_IP:22 USER@SERVER_IP
-```
-
-Туннель использует отдельный ключ хоста и не заменяет credential
-`repair-server-ssh`: Jenkins по-прежнему аутентифицируется на VM своим ключом.
-Для постоянного стенда предпочтительнее дать Linux-агенту прямой маршрут к VM.
+хостовой ОС, Linux-контейнер может не видеть её приватный IP. В этом случае
+используйте `ci/ssh-bastion.Dockerfile`: он создаёт изолированный SSH-посредник
+в Docker-сети Jenkins. У job задаются `DEFAULT_SERVER_HOST=repair-jenkins-bastion`
+и `DEFAULT_SERVER_SSH_PORT=2223`; macOS-хост создаёт обратный SSH-туннель к VM.
+Такой вариант не изменяет Wi-Fi, маршрутизацию macOS или сеть Multipass.
 
 Успешный Console Output должен показать: сборку образа, сохранение
 `repair-image.tar`, запуск `ansible/deploy_image.yml` и результат HTTP-проверки

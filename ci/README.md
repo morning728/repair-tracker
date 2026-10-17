@@ -133,13 +133,12 @@ Ansible по `ANSIBLE_COLLECTIONS_PATH`.
 приведёт к остановке до сборки; повторите Build with Parameters с настоящим IP.
 
 При связке Docker Desktop и Multipass на macOS или Windows контейнер Jenkins
-может не иметь маршрута к приватному IP VM. Временный вариант для учебного
-стенда — оставить на хосте открытым туннель
-`ssh -N -g -L 127.0.0.1:2222:SERVER_IP:22 USER@SERVER_IP` и передать Pipeline
-`SERVER_HOST=host.docker.internal`, `SERVER_SSH_PORT=2222`. Это только
-транспорт: credential `repair-server-ssh` всё равно используется Jenkins для
-аутентификации на VM. На постоянном стенде настройте прямую сеть Linux-агента
-и VM.
+может не иметь маршрута к приватному IP VM. Для локального стенда используйте
+`ci/ssh-bastion.Dockerfile`: bastion запускается в одной Docker-сети с Jenkins,
+а macOS-хост создаёт к VM обратный SSH-туннель. В Jenkins задайте
+`DEFAULT_SERVER_HOST=repair-jenkins-bastion` и `DEFAULT_SERVER_SSH_PORT=2223`.
+Такой маршрут не меняет Wi-Fi, маршрутизацию macOS или сеть Multipass;
+credential `repair-server-ssh` по-прежнему аутентифицирует Jenkins именно на VM.
 
 Серверу нужен доступ к Docker APT-репозиторию для первой установки Docker,
 но не к Docker Hub или PyPI для сборки приложения. Открытие результата:
