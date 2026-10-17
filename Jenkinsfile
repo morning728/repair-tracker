@@ -6,6 +6,9 @@ pipeline {
         timeout(time: 30, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
+    triggers {
+        pollSCM('H/1 * * * *')
+    }
     parameters {
         string(name: 'APP_PORT', defaultValue: '8081', description: 'Локальный порт приложения на Jenkins-агенте')
     }
