@@ -3,7 +3,7 @@
 {% block breadcrumb %}Редактирование заявки{% endblock %}
 {% block content %}
 <a class="back" href="{{ url_for('management.detail', request_id=request_id) }}">К карточке заявки</a>
-<div class="page-heading"><div><p class="eyebrow">Заявка № {{ '%04d'|format(request_id) }}</p><h1>Редактирование заявки</h1></div></div>
+<div class="page-heading"><div><p class="eyebrow">Заявка № {{ '%04d'|format(request_id) }}</p><h1>Редактирование заявки:</h1></div></div>
 <form class="form-surface" method="post" data-request-form>
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   {% if errors %}<div class="notice error" role="alert">Проверьте отмеченные поля. Введённые данные сохранены.</div>{% endif %}
