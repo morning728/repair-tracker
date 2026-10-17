@@ -39,6 +39,7 @@ class PipelineConfigurationTests(unittest.TestCase):
 
     def test_pipeline_reinstalls_collection_in_workspace(self):
         pipeline = (Path(__file__).resolve().parents[1] / 'Jenkinsfile.ansible').read_text()
+        self.assertIn("pollSCM('* * * * *')", pipeline)
         self.assertIn('ANSIBLE_COLLECTIONS_PATH=${env.WORKSPACE}/.ansible-collections', pipeline)
         self.assertIn(
             'ansible-galaxy collection install -r ansible/requirements.yml -p .ansible-collections --force',
