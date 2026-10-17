@@ -157,3 +157,14 @@ HTTP-доступность после запуска.
 - https://docs.docker.com/engine/install/ubuntu/
 - https://docs.ansible.com/projects/ansible/latest/collections/community/docker/docker_compose_v2_module.html
 - https://docs.ansible.com/projects/ansible/latest/installation_guide/intro_installation.html
+# Доступ из локальной сети
+
+В `group_vars/repair_servers.yml` адрес публикации `0.0.0.0` открывает приложение
+на сетевых интерфейсах Ubuntu. После развёртывания откройте `http://IP_ВМ:8080`
+с устройства, которому доступна ВМ. Для текущего учебного сервера это
+`http://192.168.1.230:8080`, если DHCP не изменил адрес.
+
+Используйте только доверенную учебную сеть: приложение не имеет авторизации.
+Не пробрасывайте порт на роутере в интернет. Для доступа только через SSH-туннель
+верните `repair_bind_address: 127.0.0.1` и повторите развёртывание.
+

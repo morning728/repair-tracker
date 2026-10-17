@@ -55,12 +55,13 @@ def check():
     variables = documents['group_vars/repair_servers.yml']
     rendered = template.render(**variables)
     compose = yaml.safe_load(rendered)
-    assert compose['services']['web']['ports'] == ['127.0.0.1:8080:8000']
+    assert compose['services']['web']['ports'] == ['0.0.0.0:8080:8000']
     assert compose['services']['web']['volumes'] == ['repair-data:/app/data']
     image_template = Environment(undefined=StrictUndefined).from_string(
         (ROOT / 'templates/compose.image.yaml.j2').read_text(encoding='utf-8'))
     image_compose = yaml.safe_load(image_template.render(**variables, repair_image_ref='repair-tracker:validation'))
     assert image_compose['services']['web']['image'] == 'repair-tracker:validation'
+    assert image_compose['services']['web']['ports'] == ['0.0.0.0:8080:8000']
     assert 'build' not in image_compose['services']['web']
     image_task = next(t for t in expanded_tasks(documents['deploy_image.yml'][0])
                       if 'community.docker.docker_compose_v2' in t)
