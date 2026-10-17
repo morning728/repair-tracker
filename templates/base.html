@@ -8,7 +8,7 @@
 </head>
 <body>
   <aside class="sidebar">
-    <a class="brand" href="/">Ремонт123<span>Сервисный центр</span></a>
+    <a class="brand" href="/">Ремонт1234<span>Сервисный центр</span></a>
     <nav aria-label="Основная навигация">
       <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Заявки</a>
       {% if has_create %}<a class="nav-link {% if request.path == '/requests/new' %}active{% endif %}" href="{{ url_for('creation.new_request') }}">Новая заявка</a>{% endif %}
