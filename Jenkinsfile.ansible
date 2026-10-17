@@ -1,5 +1,8 @@
 pipeline {
     agent { label 'docker-linux' }
+    triggers {
+        pollSCM('* * * * *')
+    }
     options {
         skipDefaultCheckout(true)
         disableConcurrentBuilds()
