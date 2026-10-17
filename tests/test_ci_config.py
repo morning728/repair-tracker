@@ -44,6 +44,7 @@ class PipelineConfigurationTests(unittest.TestCase):
             'ansible-galaxy collection install -r ansible/requirements.yml -p .ansible-collections --force',
             pipeline,
         )
+        self.assertIn('params.SERVER_HOST.trim() ?: env.DEFAULT_SERVER_HOST', pipeline)
 
 
 if __name__ == '__main__':

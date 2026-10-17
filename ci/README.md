@@ -84,6 +84,12 @@ Pipeline проверяет Git каждые одну-две минуты по �
 Cron имеет точность до минуты; для запуска быстрее минуты настройте GitHub
 webhook на адрес Jenkins, доступный GitHub из сети.
 
+Практика №5 при автоматическом запуске не открывает форму параметров. Поэтому
+в Configure → Build Environment задайте значения `DEFAULT_SERVER_HOST`,
+`DEFAULT_SERVER_USER`, `DEFAULT_SERVER_SSH_PORT` и `DEFAULT_SERVER_APP_PORT`.
+Значения, введённые в Build with Parameters, имеют приоритет над этими
+настройками. Ключи и пароли по-прежнему хранятся только в Jenkins Credentials.
+
 Две задачи с одним Compose-проектом не должны работать одновременно.
 `disableConcurrentBuilds` защищает от этого внутри одной задачи. Конвейеры
 рассчитаны на обычные Pipeline jobs, а не параллельный деплой всех веток.

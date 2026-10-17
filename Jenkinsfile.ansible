@@ -11,9 +11,9 @@ pipeline {
     }
     parameters {
         string(name: 'SERVER_HOST', defaultValue: '', description: 'IP или DNS-имя Ubuntu-сервера')
-        string(name: 'SERVER_USER', defaultValue: 'ubuntu', description: 'SSH-пользователь с правами sudo')
-        string(name: 'SERVER_SSH_PORT', defaultValue: '22', description: 'SSH-порт сервера')
-        string(name: 'SERVER_APP_PORT', defaultValue: '8080', description: 'HTTP-порт приложения на сервере')
+        string(name: 'SERVER_USER', defaultValue: '', description: 'SSH-пользователь с правами sudo')
+        string(name: 'SERVER_SSH_PORT', defaultValue: '', description: 'SSH-порт сервера')
+        string(name: 'SERVER_APP_PORT', defaultValue: '', description: 'HTTP-порт приложения на сервере')
         string(name: 'SERVER_SSH_CREDENTIAL_ID', defaultValue: 'repair-server-ssh', description: 'Jenkins credential: SSH Username with private key')
         string(name: 'SERVER_KNOWN_HOSTS_ID', defaultValue: 'repair-server-known-hosts', description: 'Jenkins credential: Secret file с проверенным ключом SSH-сервера')
         string(name: 'SERVER_SUDO_CREDENTIAL_ID', defaultValue: '', description: 'Необязательный Secret text с паролем sudo; пусто при sudo без пароля')
@@ -27,10 +27,10 @@ pipeline {
                 script {
                     def revision = sh(script: 'git rev-parse --short=12 HEAD', returnStdout: true).trim()
                     env.REPAIR_IMAGE = "repair-tracker:build-${env.BUILD_NUMBER}-${revision}"
-                    env.DEPLOY_HOST = params.SERVER_HOST
-                    env.DEPLOY_USER = params.SERVER_USER
-                    env.DEPLOY_SSH_PORT = params.SERVER_SSH_PORT
-                    env.DEPLOY_APP_PORT = params.SERVER_APP_PORT
+                    env.DEPLOY_HOST = params.SERVER_HOST.trim() ?: env.DEFAULT_SERVER_HOST
+                    env.DEPLOY_USER = params.SERVER_USER.trim() ?: env.DEFAULT_SERVER_USER ?: 'ubuntu'
+                    env.DEPLOY_SSH_PORT = params.SERVER_SSH_PORT.trim() ?: env.DEFAULT_SERVER_SSH_PORT ?: '22'
+                    env.DEPLOY_APP_PORT = params.SERVER_APP_PORT.trim() ?: env.DEFAULT_SERVER_APP_PORT ?: '8080'
                 }
                 sh '''
                     set -eu
